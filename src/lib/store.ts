@@ -68,13 +68,34 @@ export function useProducts() {
   return ready ? data : [];
 }
 
+const ADMIN_KEY = "estoque.admin.v1";
+
+export type Admin = { username: string; password: string; createdAt: string };
+
 export const auth = {
   isAuthed() {
     if (typeof window === "undefined") return false;
     return !!localStorage.getItem(SESSION);
   },
-  login(email: string) {
-    localStorage.setItem(SESSION, JSON.stringify({ email, at: Date.now() }));
+  hasAdmin() {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem(ADMIN_KEY);
+  },
+  registerAdmin(username: string, password: string) {
+    const admin: Admin = { username, password, createdAt: new Date().toISOString() };
+    localStorage.setItem(ADMIN_KEY, JSON.stringify(admin));
+  },
+  getAdmin(): Admin | null {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem(ADMIN_KEY);
+    return raw ? (JSON.parse(raw) as Admin) : null;
+  },
+  validate(username: string, password: string) {
+    const a = this.getAdmin();
+    return !!a && a.username === username && a.password === password;
+  },
+  login(username: string) {
+    localStorage.setItem(SESSION, JSON.stringify({ email: username, at: Date.now() }));
   },
   user() {
     if (typeof window === "undefined") return null;

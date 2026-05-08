@@ -1,10 +1,12 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Boxes, ShieldCheck } from "lucide-react";
+import { Boxes, ShieldCheck, UserPlus, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { auth } from "@/lib/store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: LoginPage,
@@ -18,12 +20,53 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const nav = useNavigate();
-  const [email, setEmail] = useState("admin@estoque.io");
-  const [pwd, setPwd] = useState("123456");
+  const [username, setUsername] = useState("");
+  const [pwd, setPwd] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"login" | "2fa">("login");
+  const [error, setError] = useState("");
 
-  useEffect(() => { if (auth.isAuthed()) nav({ to: "/dashboard" }); }, [nav]);
+  // Admin registration modal
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [hasAdmin, setHasAdmin] = useState(false);
+  const [regUser, setRegUser] = useState("");
+  const [regPwd, setRegPwd] = useState("");
+  const [regPwd2, setRegPwd2] = useState("");
+  const [regError, setRegError] = useState("");
+
+  useEffect(() => {
+    if (auth.isAuthed()) nav({ to: "/dashboard" });
+    setHasAdmin(auth.hasAdmin());
+  }, [nav]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!auth.hasAdmin()) {
+      setError("Nenhum administrador cadastrado. Cadastre-se primeiro.");
+      return;
+    }
+    if (!auth.validate(username, pwd)) {
+      setError("Usuário ou senha incorretos.");
+      return;
+    }
+    setStep("2fa");
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError("");
+    if (regUser.trim().length < 3) return setRegError("Usuário deve ter ao menos 3 caracteres.");
+    if (regPwd.length < 3) return setRegError("Senha deve ter ao menos 3 caracteres.");
+    if (regPwd !== regPwd2) return setRegError("As senhas não coincidem.");
+    auth.registerAdmin(regUser.trim(), regPwd);
+    setHasAdmin(true);
+    setRegisterOpen(false);
+    setUsername(regUser.trim());
+    setPwd("");
+    setRegUser(""); setRegPwd(""); setRegPwd2("");
+    toast.success("Administrador cadastrado com sucesso");
+  };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -59,23 +102,39 @@ function LoginPage() {
           {step === "login" ? (
             <>
               <h2 className="font-display text-2xl font-semibold">Bem-vinda de volta</h2>
-              <p className="text-sm text-muted-foreground mt-1">Entre com suas credenciais de administrador.</p>
-              <form
-                className="mt-6 space-y-4"
-                onSubmit={(e) => { e.preventDefault(); setStep("2fa"); }}
-              >
+              <p className="text-sm text-muted-foreground mt-1">
+                {hasAdmin ? "Entre com suas credenciais de administrador." : "Comece cadastrando o administrador."}
+              </p>
+              <form className="mt-6 space-y-4" onSubmit={handleLogin}>
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Label htmlFor="user">Usuário</Label>
+                  <Input id="user" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pwd">Senha</Label>
-                  <Input id="pwd" type="password" required value={pwd} onChange={(e) => setPwd(e.target.value)} />
+                  <Input id="pwd" type="password" required value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="••••" />
                 </div>
-                <Button type="submit" className="w-full" size="lg">Continuar</Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Ainda não tem conta? <Link to="/" className="text-primary hover:underline">Cadastrar administrador</Link>
-                </p>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" size="lg" disabled={!hasAdmin}>Continuar</Button>
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                  <div className="relative flex justify-center"><span className="bg-card px-3 text-xs text-muted-foreground">ou</span></div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setRegisterOpen(true)}
+                >
+                  <UserPlus className="size-4" />
+                  {hasAdmin ? "Cadastrar outro administrador" : "Cadastrar administrador"}
+                </Button>
+                {hasAdmin && (
+                  <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                    <CheckCircle2 className="size-3 text-primary" /> Administrador já cadastrado
+                  </p>
+                )}
               </form>
             </>
           ) : (
@@ -87,7 +146,7 @@ function LoginPage() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (otp.length !== 6) return;
-                  auth.login(email);
+                  auth.login(username);
                   nav({ to: "/dashboard" });
                 }}
               >
@@ -102,7 +161,7 @@ function LoginPage() {
                 <Button type="submit" className="w-full" size="lg" disabled={otp.length !== 6}>
                   Entrar no painel
                 </Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={() => setStep("login")}>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep("login"); setOtp(""); }}>
                   Voltar
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">Use qualquer código de 6 dígitos no protótipo.</p>
@@ -111,6 +170,36 @@ function LoginPage() {
           )}
         </div>
       </section>
+
+      <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Cadastrar administrador</DialogTitle>
+            <DialogDescription>
+              Crie a conta de administrador que terá acesso completo ao painel.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="regUser">Usuário</Label>
+              <Input id="regUser" autoFocus value={regUser} onChange={(e) => setRegUser(e.target.value)} placeholder="admin" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="regPwd">Senha</Label>
+              <Input id="regPwd" type="password" value={regPwd} onChange={(e) => setRegPwd(e.target.value)} placeholder="••••" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="regPwd2">Confirmar senha</Label>
+              <Input id="regPwd2" type="password" value={regPwd2} onChange={(e) => setRegPwd2(e.target.value)} placeholder="••••" required />
+            </div>
+            {regError && <p className="text-sm text-destructive">{regError}</p>}
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="ghost" onClick={() => setRegisterOpen(false)}>Cancelar</Button>
+              <Button type="submit">Cadastrar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
