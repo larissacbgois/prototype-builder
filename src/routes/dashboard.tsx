@@ -194,7 +194,110 @@ function Dashboard() {
           </div>
         </section>
       </div>
+
+      <RestockDialog open={alertOpen} onOpenChange={setAlertOpen} items={lowStockItems} total={totalReposicao} />
     </AppShell>
+  );
+}
+
+type RestockItem = {
+  product: Product;
+  suggested: number;
+  marketAvg: number;
+  totalCost: number;
+  urgency: "critico" | "alto" | "medio";
+};
+
+function RestockDialog({
+  open, onOpenChange, items, total,
+}: { open: boolean; onOpenChange: (v: boolean) => void; items: RestockItem[]; total: number }) {
+  const urgencyMeta = {
+    critico: { label: "Crítico", className: "bg-destructive text-destructive-foreground" },
+    alto: { label: "Alto", className: "bg-destructive/15 text-destructive border border-destructive/30" },
+    medio: { label: "Médio", className: "bg-secondary text-foreground border border-border" },
+  } as const;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl grid place-items-center bg-destructive/15 text-destructive">
+              <ShoppingCart className="size-5" />
+            </div>
+            <div>
+              <DialogTitle className="font-display text-2xl">Lista de reposição</DialogTitle>
+              <DialogDescription>
+                Produtos abaixo do estoque mínimo, com sugestão de compra e preço médio estimado de mercado.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
+          {items.map(({ product: p, suggested, marketAvg, totalCost, urgency }) => {
+            const meta = urgencyMeta[urgency];
+            const pctRestante = Math.min(100, Math.round((p.quantity / Math.max(1, p.minStock)) * 100));
+            return (
+              <div key={p.id} className="rounded-xl border border-border bg-card/60 p-4 hover:border-destructive/40 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-semibold ${meta.className}`}>
+                        {meta.label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{p.category || "Sem categoria"}</span>
+                    </div>
+                    <h4 className="font-display text-base font-semibold mt-1 truncate">{p.name}</h4>
+                    <p className="text-xs text-muted-foreground">Cód. {p.sku}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-muted-foreground">Comprar</p>
+                    <p className="font-display text-2xl font-semibold leading-none">{suggested}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">unidades</p>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">
+                      Em estoque: <span className="text-foreground font-medium">{p.quantity}</span> / mín {p.minStock}
+                    </span>
+                    <span className="text-destructive font-medium">{pctRestante}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full rounded-full bg-destructive transition-all" style={{ width: `${pctRestante}%` }} />
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded-lg bg-secondary/50 p-2">
+                    <p className="text-muted-foreground">Custo atual</p>
+                    <p className="font-semibold text-sm">R$ {p.price.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 p-2">
+                    <p className="text-muted-foreground">Preço médio mercado</p>
+                    <p className="font-semibold text-sm">R$ {marketAvg.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <p className="text-muted-foreground">Total estimado</p>
+                    <p className="font-semibold text-sm text-primary">R$ {totalCost.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border pt-4 mt-2">
+          <div>
+            <p className="text-xs text-muted-foreground">Investimento total estimado</p>
+            <p className="font-display text-2xl font-semibold">R$ {total.toFixed(2)}</p>
+          </div>
+          <Button onClick={() => onOpenChange(false)} variant="outline">Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
