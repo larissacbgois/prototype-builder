@@ -36,7 +36,7 @@ function Dashboard() {
           const seed = Array.from(p.id).reduce((a, c) => a + c.charCodeAt(0), 0);
           const factor = 1.12 + ((seed % 11) / 100);
           const marketAvg = p.price * factor;
-          const urgency = p.quantity === 0 ? "critico" : p.quantity <= p.minStock / 2 ? "alto" : "medio";
+          const urgency: "critico" | "alto" | "medio" = p.quantity === 0 ? "critico" : p.quantity <= p.minStock / 2 ? "alto" : "medio";
           return { product: p, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
         })
         .sort((a, b) => a.product.quantity - b.product.quantity),
