@@ -87,6 +87,21 @@ function Dashboard() {
             </h1>
             <p className="text-muted-foreground mt-1">Aqui está o resumo do seu estoque hoje.</p>
           </div>
+          {lowStockItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAlertOpen(true)}
+              aria-label={`${lowStockItems.length} ${lowStockItems.length === 1 ? "produto precisa" : "produtos precisam"} de reposição`}
+              title="Reposição urgente"
+              className="relative inline-flex size-10 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10 text-destructive transition-colors hover:bg-destructive/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40"
+            >
+              <AlertTriangle className="size-4" />
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold leading-[18px] text-center">
+                {lowStockItems.length}
+              </span>
+              <span className="absolute inset-0 rounded-full ring-2 ring-destructive/30 animate-ping pointer-events-none" />
+            </button>
+          )}
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
