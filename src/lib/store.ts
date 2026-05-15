@@ -1,5 +1,11 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+export type Supplier = {
+  name: string;
+  phone: string;
+  email: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -7,19 +13,21 @@ export type Product = {
   category: string;
   quantity: number;
   minStock: number;
+  idealStock?: number;
   price: number;
+  supplier?: Supplier;
   createdAt: string;
 };
 
-const KEY = "estoque.products.v1";
+const KEY = "estoque.products.v2";
 const SESSION = "estoque.session.v1";
 
 const seed: Product[] = [
-  { id: "1", name: "Café Especial 250g", sku: "CAF-250", category: "Bebidas", quantity: 42, minStock: 10, price: 32.9, createdAt: new Date().toISOString() },
-  { id: "2", name: "Chocolate 70% 100g", sku: "CHO-070", category: "Doces", quantity: 8, minStock: 12, price: 18.5, createdAt: new Date().toISOString() },
-  { id: "3", name: "Açúcar Demerara 1kg", sku: "ACU-DEM", category: "Mercearia", quantity: 60, minStock: 20, price: 14.2, createdAt: new Date().toISOString() },
-  { id: "4", name: "Leite Integral 1L", sku: "LEI-INT", category: "Laticínios", quantity: 24, minStock: 15, price: 6.9, createdAt: new Date().toISOString() },
-  { id: "5", name: "Pão Brioche 500g", sku: "PAO-BRI", category: "Padaria", quantity: 5, minStock: 10, price: 12.0, createdAt: new Date().toISOString() },
+  { id: "1", name: "Café Especial 250g", sku: "CAF-250", category: "Bebidas", quantity: 42, minStock: 10, idealStock: 40, price: 32.9, supplier: { name: "Torrefação Serra Azul", phone: "5511987651122", email: "vendas@serraazul.com.br" }, createdAt: new Date().toISOString() },
+  { id: "2", name: "Chocolate 70% 100g", sku: "CHO-070", category: "Doces", quantity: 8, minStock: 12, idealStock: 36, price: 18.5, supplier: { name: "Cacau & Cia", phone: "5521991234567", email: "comercial@cacauecia.com.br" }, createdAt: new Date().toISOString() },
+  { id: "3", name: "Açúcar Demerara 1kg", sku: "ACU-DEM", category: "Mercearia", quantity: 60, minStock: 20, idealStock: 60, price: 14.2, supplier: { name: "Engenho Bom Jardim", phone: "5581988774455", email: "pedidos@bomjardim.com.br" }, createdAt: new Date().toISOString() },
+  { id: "4", name: "Leite Integral 1L", sku: "LEI-INT", category: "Laticínios", quantity: 24, minStock: 15, idealStock: 50, price: 6.9, supplier: { name: "Laticínios Vale Verde", phone: "5531992345678", email: "atendimento@valeverde.com.br" }, createdAt: new Date().toISOString() },
+  { id: "5", name: "Pão Brioche 500g", sku: "PAO-BRI", category: "Padaria", quantity: 5, minStock: 10, idealStock: 30, price: 12.0, supplier: { name: "Padaria Forno de Pedra", phone: "5511993456789", email: "contato@fornodepedra.com.br" }, createdAt: new Date().toISOString() },
 ];
 
 const listeners = new Set<() => void>();
