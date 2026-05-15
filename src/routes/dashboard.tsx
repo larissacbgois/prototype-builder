@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowDownRight, ArrowUpRight, Boxes, DollarSign, PackageX, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Boxes, DollarSign, PackageX, ShoppingCart, Sparkles, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { auth, useProducts } from "@/lib/store";
+import { auth, useProducts, type Product } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
