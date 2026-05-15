@@ -30,14 +30,15 @@ function Dashboard() {
       products
         .filter((p) => p.quantity < p.minStock)
         .map((p) => {
-          const suggested = Math.max(p.minStock * 2 - p.quantity, p.minStock);
+          const idealStock = p.idealStock ?? p.minStock * 3;
+          const suggested = Math.max(idealStock - p.quantity, p.minStock);
           // Estimativa de preço médio de mercado: variação de +12% a +22% sobre o custo,
           // determinística por produto (hash do id) para não oscilar a cada render.
           const seed = Array.from(p.id).reduce((a, c) => a + c.charCodeAt(0), 0);
           const factor = 1.12 + ((seed % 11) / 100);
           const marketAvg = p.price * factor;
           const urgency: "critico" | "alto" | "medio" = p.quantity === 0 ? "critico" : p.quantity <= p.minStock / 2 ? "alto" : "medio";
-          return { product: p, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
+          return { product: p, idealStock, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
         })
         .sort((a, b) => a.product.quantity - b.product.quantity),
     [products],
