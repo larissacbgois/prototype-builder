@@ -111,38 +111,6 @@ function Dashboard() {
           <Stat icon={TrendingUp} label="Giro semanal" value="68%" hint="últimos 7 dias" trend="up" delta="+3,2%" />
         </section>
 
-        {lowStockItems.length > 0 && (
-          <section
-            className="surface-card relative overflow-hidden p-6 md:p-7 border-destructive/40"
-            style={{ background: "linear-gradient(135deg, color-mix(in oklab, var(--destructive) 14%, var(--card)), var(--card) 70%)" }}
-          >
-            <div className="absolute -top-16 -right-16 size-56 rounded-full blur-3xl opacity-30" style={{ background: "var(--destructive)" }} />
-            <div className="relative flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="size-12 rounded-2xl grid place-items-center bg-destructive/15 text-destructive shrink-0">
-                  <AlertTriangle className="size-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="destructive" className="uppercase tracking-wide text-[10px]">Reposição urgente</Badge>
-                    <span className="text-xs text-muted-foreground">atualizado agora</span>
-                  </div>
-                  <h3 className="font-display text-xl md:text-2xl font-semibold mt-2">
-                    {lowStockItems.length} {lowStockItems.length === 1 ? "produto está" : "produtos estão"} prestes a esgotar
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Investimento estimado para recompor o estoque:{" "}
-                    <span className="font-semibold text-foreground">R$ {totalReposicao.toFixed(2)}</span>
-                  </p>
-                </div>
-              </div>
-              <Button size="lg" onClick={() => setAlertOpen(true)} className="gap-2">
-                <Sparkles className="size-4" /> Ver lista de compras
-              </Button>
-            </div>
-          </section>
-        )}
-
         <section className="grid gap-4 lg:grid-cols-3">
           <div className="surface-card p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
