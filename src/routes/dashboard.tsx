@@ -57,7 +57,7 @@ function Dashboard() {
           <div>
             <p className="text-sm text-muted-foreground">Painel administrativo</p>
             <h1 className="font-display text-3xl md:text-4xl font-semibold mt-1">
-              Olá, <span className="text-gradient">Larissa</span>
+              Olá, <span className="text-gradient">Administrador</span>
             </h1>
             <p className="text-muted-foreground mt-1">Aqui está o resumo do seu estoque hoje.</p>
           </div>
