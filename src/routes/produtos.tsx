@@ -66,7 +66,7 @@ function ProdutosPage() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>SKU</Label>
+                  <Label>Código de referência</Label>
                   <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
@@ -98,7 +98,7 @@ function ProdutosPage() {
             <Search className="size-4 text-muted-foreground" />
             <Input
               className="border-0 bg-transparent focus-visible:ring-0 px-0"
-              placeholder="Buscar por nome, SKU ou categoria…"
+              placeholder="Buscar por nome, código de referência ou categoria…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -107,7 +107,7 @@ function ProdutosPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
-                <TableHead>SKU</TableHead>
+                <TableHead>Código de referência</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Preço</TableHead>
                 <TableHead className="text-center">Quantidade</TableHead>

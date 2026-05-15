@@ -64,7 +64,7 @@ function Dashboard() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Boxes} label="Itens em estoque" value={stats.totalQty.toString()} hint={`${stats.skus} SKUs`} trend="up" delta="+12%" />
+          <Stat icon={Boxes} label="Itens em estoque" value={stats.totalQty.toString()} hint={`${stats.skus} códigos`} trend="up" delta="+12%" />
           <Stat icon={DollarSign} label="Valor em estoque" value={`R$ ${stats.totalValue.toFixed(2)}`} hint="custo total" trend="up" delta="+4,8%" />
           <Stat icon={PackageX} label="Em falta" value={stats.lowStock.toString()} hint="abaixo do mínimo" trend={stats.lowStock > 0 ? "down" : "up"} delta={stats.lowStock > 0 ? "atenção" : "ok"} />
           <Stat icon={TrendingUp} label="Giro semanal" value="68%" hint="últimos 7 dias" trend="up" delta="+3,2%" />
