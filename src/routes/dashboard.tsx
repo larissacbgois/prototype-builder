@@ -23,6 +23,28 @@ function Dashboard() {
   useEffect(() => { if (!auth.isAuthed()) nav({ to: "/" }); }, [nav]);
 
   const products = useProducts();
+  const [alertOpen, setAlertOpen] = useState(false);
+
+  const lowStockItems = useMemo(
+    () =>
+      products
+        .filter((p) => p.quantity < p.minStock)
+        .map((p) => {
+          const suggested = Math.max(p.minStock * 2 - p.quantity, p.minStock);
+          // Estimativa de preço médio de mercado: variação de +12% a +22% sobre o custo,
+          // determinística por produto (hash do id) para não oscilar a cada render.
+          const seed = Array.from(p.id).reduce((a, c) => a + c.charCodeAt(0), 0);
+          const factor = 1.12 + ((seed % 11) / 100);
+          const marketAvg = p.price * factor;
+          const urgency = p.quantity === 0 ? "critico" : p.quantity <= p.minStock / 2 ? "alto" : "medio";
+          return { product: p, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
+        })
+        .sort((a, b) => a.product.quantity - b.product.quantity),
+    [products],
+  );
+
+  const totalReposicao = lowStockItems.reduce((a, x) => a + x.totalCost, 0);
+
 
   const stats = useMemo(() => {
     const totalQty = products.reduce((a, p) => a + p.quantity, 0);
@@ -72,6 +94,38 @@ function Dashboard() {
           <Stat icon={PackageX} label="Em falta" value={stats.lowStock.toString()} hint="abaixo do mínimo" trend={stats.lowStock > 0 ? "down" : "up"} delta={stats.lowStock > 0 ? "atenção" : "ok"} />
           <Stat icon={TrendingUp} label="Giro semanal" value="68%" hint="últimos 7 dias" trend="up" delta="+3,2%" />
         </section>
+
+        {lowStockItems.length > 0 && (
+          <section
+            className="surface-card relative overflow-hidden p-6 md:p-7 border-destructive/40"
+            style={{ background: "linear-gradient(135deg, color-mix(in oklab, var(--destructive) 14%, var(--card)), var(--card) 70%)" }}
+          >
+            <div className="absolute -top-16 -right-16 size-56 rounded-full blur-3xl opacity-30" style={{ background: "var(--destructive)" }} />
+            <div className="relative flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl grid place-items-center bg-destructive/15 text-destructive shrink-0">
+                  <AlertTriangle className="size-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive" className="uppercase tracking-wide text-[10px]">Reposição urgente</Badge>
+                    <span className="text-xs text-muted-foreground">atualizado agora</span>
+                  </div>
+                  <h3 className="font-display text-xl md:text-2xl font-semibold mt-2">
+                    {lowStockItems.length} {lowStockItems.length === 1 ? "produto está" : "produtos estão"} prestes a esgotar
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Investimento estimado para recompor o estoque:{" "}
+                    <span className="font-semibold text-foreground">R$ {totalReposicao.toFixed(2)}</span>
+                  </p>
+                </div>
+              </div>
+              <Button size="lg" onClick={() => setAlertOpen(true)} className="gap-2">
+                <Sparkles className="size-4" /> Ver lista de compras
+              </Button>
+            </div>
+          </section>
+        )}
 
         <section className="grid gap-4 lg:grid-cols-3">
           <div className="surface-card p-6 lg:col-span-2">
