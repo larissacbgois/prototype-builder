@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Boxes, DollarSign, PackageX, ShoppingCart, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Boxes, DollarSign, Mail, MessageCircle, PackageX, Phone, ShoppingCart, Sparkles, TrendingUp, Truck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { auth, useProducts, type Product } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -30,14 +30,15 @@ function Dashboard() {
       products
         .filter((p) => p.quantity < p.minStock)
         .map((p) => {
-          const suggested = Math.max(p.minStock * 2 - p.quantity, p.minStock);
+          const idealStock = p.idealStock ?? p.minStock * 3;
+          const suggested = Math.max(idealStock - p.quantity, p.minStock);
           // Estimativa de preço médio de mercado: variação de +12% a +22% sobre o custo,
           // determinística por produto (hash do id) para não oscilar a cada render.
           const seed = Array.from(p.id).reduce((a, c) => a + c.charCodeAt(0), 0);
           const factor = 1.12 + ((seed % 11) / 100);
           const marketAvg = p.price * factor;
           const urgency: "critico" | "alto" | "medio" = p.quantity === 0 ? "critico" : p.quantity <= p.minStock / 2 ? "alto" : "medio";
-          return { product: p, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
+          return { product: p, idealStock, suggested, marketAvg, totalCost: marketAvg * suggested, urgency };
         })
         .sort((a, b) => a.product.quantity - b.product.quantity),
     [products],
@@ -202,11 +203,19 @@ function Dashboard() {
 
 type RestockItem = {
   product: Product;
+  idealStock: number;
   suggested: number;
   marketAvg: number;
   totalCost: number;
   urgency: "critico" | "alto" | "medio";
 };
+
+function formatPhone(p: string) {
+  const d = p.replace(/\D/g, "");
+  if (d.length === 13) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  return p;
+}
 
 function RestockDialog({
   open, onOpenChange, items, total,
@@ -235,9 +244,13 @@ function RestockDialog({
         </DialogHeader>
 
         <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-3">
-          {items.map(({ product: p, suggested, marketAvg, totalCost, urgency }) => {
+          {items.map(({ product: p, idealStock, suggested, marketAvg, totalCost, urgency }) => {
             const meta = urgencyMeta[urgency];
             const pctRestante = Math.min(100, Math.round((p.quantity / Math.max(1, p.minStock)) * 100));
+            const s = p.supplier;
+            const waMsg = encodeURIComponent(
+              `Olá${s ? `, ${s.name}` : ""}! Gostaria de fazer um pedido de ${suggested} unidades de "${p.name}" (cód. ${p.sku}).`,
+            );
             return (
               <div key={p.id} className="rounded-xl border border-border bg-card/60 p-4 hover:border-destructive/40 transition-colors">
                 <div className="flex items-start justify-between gap-4">
@@ -261,7 +274,7 @@ function RestockDialog({
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">
-                      Em estoque: <span className="text-foreground font-medium">{p.quantity}</span> / mín {p.minStock}
+                      Em estoque: <span className="text-foreground font-medium">{p.quantity}</span> / mín {p.minStock} · ideal {idealStock}
                     </span>
                     <span className="text-destructive font-medium">{pctRestante}%</span>
                   </div>
@@ -283,6 +296,37 @@ function RestockDialog({
                     <p className="text-muted-foreground">Total estimado</p>
                     <p className="font-semibold text-sm text-primary">R$ {totalCost.toFixed(2)}</p>
                   </div>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-border/70 bg-background/40 p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Truck className="size-3.5" /> Fornecedor
+                  </div>
+                  {s ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{s.name}</p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-0.5">
+                          <span className="inline-flex items-center gap-1"><Phone className="size-3" /> {formatPhone(s.phone)}</span>
+                          <span className="inline-flex items-center gap-1"><Mail className="size-3" /> {s.email}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button asChild size="sm" variant="outline" className="h-8">
+                          <a href={`mailto:${s.email}?subject=${encodeURIComponent(`Pedido — ${p.name}`)}&body=${waMsg}`}>
+                            <Mail className="size-3.5" /> E-mail
+                          </a>
+                        </Button>
+                        <Button asChild size="sm" className="h-8 bg-[#25D366] hover:bg-[#1ebe57] text-white">
+                          <a href={`https://wa.me/${s.phone.replace(/\D/g, "")}?text=${waMsg}`} target="_blank" rel="noreferrer">
+                            <MessageCircle className="size-3.5" /> WhatsApp
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">Nenhum fornecedor cadastrado para este produto.</p>
+                  )}
                 </div>
               </div>
             );
